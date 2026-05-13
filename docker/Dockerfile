@@ -48,7 +48,9 @@ RUN mkdir -p /tmp_workspace /root/.openhermit /var/lib/postgresql-state
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
 COPY docker/seed.sh /usr/local/bin/seed.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/healthcheck.sh /usr/local/bin/seed.sh
+COPY docker/seed_helpers.sh /usr/local/bin/seed_helpers.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/healthcheck.sh \
+             /usr/local/bin/seed.sh /usr/local/bin/seed_helpers.sh
 
 EXPOSE 4000
 

@@ -31,6 +31,28 @@ export OPENHERMIT_TOKEN="$GATEWAY_ADMIN_TOKEN"
 echo "$GATEWAY_ADMIN_TOKEN" > /root/.openhermit/admin_token
 echo "$OPENHERMIT_SECRETS_KEY" > /root/.openhermit/secrets_key
 
+# Persist auth + DB env vars so `docker exec` shells see them (entrypoint exports
+# don't propagate to later exec sessions).
+cat > /etc/profile.d/hermitbench.sh <<EOF
+export GATEWAY_ADMIN_TOKEN="$GATEWAY_ADMIN_TOKEN"
+export GATEWAY_JWT_SECRET="$GATEWAY_JWT_SECRET"
+export OPENHERMIT_SECRETS_KEY="$OPENHERMIT_SECRETS_KEY"
+export OPENHERMIT_TOKEN="$OPENHERMIT_TOKEN"
+export DATABASE_URL="$DATABASE_URL"
+export GATEWAY_HOST="$GATEWAY_HOST"
+export GATEWAY_PORT="$GATEWAY_PORT"
+export OPENHERMIT_GATEWAY_URL="$OPENHERMIT_GATEWAY_URL"
+export OPENHERMIT_AGENT_ID="$OPENHERMIT_AGENT_ID"
+EOF
+# Also write to /etc/environment for non-shell exec contexts.
+{
+  echo "GATEWAY_ADMIN_TOKEN=$GATEWAY_ADMIN_TOKEN"
+  echo "OPENHERMIT_TOKEN=$OPENHERMIT_TOKEN"
+  echo "OPENHERMIT_SECRETS_KEY=$OPENHERMIT_SECRETS_KEY"
+  echo "DATABASE_URL=$DATABASE_URL"
+  echo "OPENHERMIT_GATEWAY_URL=$OPENHERMIT_GATEWAY_URL"
+} > /etc/environment
+
 # Apply any per-task pre-gateway seed (SQL)
 if [ -f /tmp_workspace/seed.sql ]; then
   echo "[entrypoint] applying seed.sql"
