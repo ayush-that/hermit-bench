@@ -24,7 +24,8 @@ fi
 # Generate admin token + JWT secret if not present
 export GATEWAY_ADMIN_TOKEN="${GATEWAY_ADMIN_TOKEN:-$(openssl rand -hex 32)}"
 export GATEWAY_JWT_SECRET="${GATEWAY_JWT_SECRET:-$(openssl rand -hex 32)}"
-export OPENHERMIT_SECRETS_KEY="${OPENHERMIT_SECRETS_KEY:-$(openssl rand -hex 32)}"
+# OPENHERMIT_SECRETS_KEY must decode to exactly 32 bytes (base64-encoded), per the gateway.
+export OPENHERMIT_SECRETS_KEY="${OPENHERMIT_SECRETS_KEY:-$(openssl rand -base64 32)}"
 export OPENHERMIT_TOKEN="$GATEWAY_ADMIN_TOKEN"
 
 echo "$GATEWAY_ADMIN_TOKEN" > /root/.openhermit/admin_token
@@ -36,8 +37,9 @@ if [ -f /tmp_workspace/seed.sql ]; then
   PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1 -f /tmp_workspace/seed.sql
 fi
 
-# Start the gateway. `hermit gateway run` is the foreground command — there is no `--foreground` flag.
-hermit gateway run --host 0.0.0.0 --port 4000 &
+# Start the gateway. `hermit gateway run` is the foreground command (no flags;
+# it reads GATEWAY_HOST / GATEWAY_PORT from the environment).
+hermit gateway run &
 GATEWAY_PID=$!
 
 # Block until the /health endpoint responds.

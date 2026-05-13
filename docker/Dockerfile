@@ -37,7 +37,7 @@ RUN npm install -g openhermit@latest
 # The createuser/createdb step happens at entrypoint runtime, guarded by a flag file.
 
 ENV DATABASE_URL=postgres://hermit:hermit@127.0.0.1:5432/hermit
-ENV GATEWAY_HOST=127.0.0.1
+ENV GATEWAY_HOST=0.0.0.0
 ENV GATEWAY_PORT=4000
 ENV OPENHERMIT_GATEWAY_URL=http://127.0.0.1:4000
 ENV OPENHERMIT_AGENT_ID=main
