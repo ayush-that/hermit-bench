@@ -25,8 +25,8 @@ __pycache__/
 Images/
 _workspace/
 workspace/
-script/
 tools/
+.venv/
 output/
 output_sum/
 output_qwen/
