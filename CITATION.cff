@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+title: HermitBench
+message: "If you use HermitBench, please cite it."
+type: software
+authors:
+  - given-names: Amiko
+    name-particle: ""
+repository-code: "https://github.com/HCF-S/hermit-bench"
+license: MIT
