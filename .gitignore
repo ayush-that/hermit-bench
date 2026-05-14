@@ -22,6 +22,11 @@ __pycache__/
 *.onnx
 .env
 
+# Per-task seed files materialised by src/agents/openhermit/runner.py at run
+# time; they live next to the workspace skeleton but are regenerated per run.
+fixtures/workspaces/**/seed.sql
+fixtures/workspaces/**/seed_post.sh
+
 Images/
 _workspace/
 workspace/
