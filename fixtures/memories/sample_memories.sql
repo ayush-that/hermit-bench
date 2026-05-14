@@ -1,11 +1,6 @@
 -- fixtures/memories/sample_memories.sql
 --
--- Verified against schema.ts:
---   memories : ((agent_id, memory_key) PK, content, metadata jsonb default {},
---               grants jsonb default [], created_at text, updated_at text)
---
--- The PK column is `memory_key`, NOT `key` (the plan draft used `key` — fixed
--- here). All timestamp columns are text (ISO strings).
+-- PK is (agent_id, memory_key). Timestamp columns are text.
 
 INSERT INTO memories (agent_id, memory_key, content, created_at, updated_at) VALUES
   ('main', 'fact-favorite-coffee', 'Alice prefers oat-milk flat whites, no sugar.', NOW()::text, NOW()::text),

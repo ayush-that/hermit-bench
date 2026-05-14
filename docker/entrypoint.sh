@@ -5,7 +5,6 @@ set -euo pipefail
 # Start Postgres (the postgresql-16 apt package already initialised /var/lib/postgresql/16/main)
 service postgresql start
 
-# Wait for Postgres to accept connections
 for _ in $(seq 1 60); do
   if pg_isready -h 127.0.0.1 -p 5432 -q; then
     break
@@ -21,7 +20,6 @@ if [ ! -f /var/lib/postgresql-state/.bootstrapped ]; then
   touch /var/lib/postgresql-state/.bootstrapped
 fi
 
-# Generate admin token + JWT secret if not present
 export GATEWAY_ADMIN_TOKEN="${GATEWAY_ADMIN_TOKEN:-$(openssl rand -hex 32)}"
 export GATEWAY_JWT_SECRET="${GATEWAY_JWT_SECRET:-$(openssl rand -hex 32)}"
 # OPENHERMIT_SECRETS_KEY must decode to exactly 32 bytes (base64-encoded), per the gateway.
@@ -53,7 +51,6 @@ EOF
   echo "OPENHERMIT_GATEWAY_URL=$OPENHERMIT_GATEWAY_URL"
 } > /etc/environment
 
-# Apply any per-task pre-gateway seed (SQL)
 if [ -f /tmp_workspace/seed.sql ]; then
   echo "[entrypoint] applying seed.sql"
   PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1 -f /tmp_workspace/seed.sql
@@ -64,7 +61,6 @@ fi
 hermit gateway run &
 GATEWAY_PID=$!
 
-# Block until the /health endpoint responds.
 /usr/local/bin/healthcheck.sh
 
 # Apply post-gateway seeds (need the gateway running, e.g. `hermit agents create`)
@@ -73,7 +69,6 @@ if [ -f /tmp_workspace/seed_post.sh ]; then
   bash /tmp_workspace/seed_post.sh
 fi
 
-# If a CMD was passed, run it; otherwise wait on the gateway.
 if [ "$#" -gt 0 ]; then
   exec "$@"
 else

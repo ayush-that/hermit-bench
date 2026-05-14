@@ -21,7 +21,7 @@ pw:   hermit
 
 Outside `seed_post.sh` you can also reach it from the grader: `PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1`.
 
-## Verified table reference
+## Table reference
 
 The fixtures and `Seed SQL` blocks must match the OpenHermit Drizzle schema at `packages/store/src/schema.ts`. The columns most tasks touch:
 
@@ -50,7 +50,7 @@ Inside `seed_post.sh`, run `source /usr/local/bin/seed_helpers.sh` to use:
 - `hb_seed_secret <agent> <key> <value>` — `hermit config --agent <a> secrets set <key> <value>`.
 - `hb_seed_openrouter <agent> <api_key> <model>` — convenience: secret + `model.provider=openrouter` + `model.model=<m>`.
 
-## CLI flag placement (verified)
+## CLI flag placement
 
 - `hermit config` carries `--agent` as a **subcommand-level** option (i.e. `hermit config --agent <id> set ...` and `hermit config --agent <id> secrets set ...`). It is NOT a top-level flag on `hermit` itself.
 - `hermit instructions set` takes `--agent` on the subcommand.

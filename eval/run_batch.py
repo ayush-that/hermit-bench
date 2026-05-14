@@ -129,10 +129,7 @@ def run_single_task(
         except Exception as exc:  # noqa: BLE001
             logger.warning("[%s] collect_output failed: %s", task_id, exc)
         if agent_proc is not None:
-            try:
-                close_proc_log(agent_proc)
-            except Exception:  # noqa: BLE001
-                pass
+            close_proc_log(agent_proc)
         remove_container(task_id)
     return result
 

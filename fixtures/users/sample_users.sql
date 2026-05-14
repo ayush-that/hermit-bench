@@ -1,13 +1,7 @@
 -- fixtures/users/sample_users.sql
 --
--- Verified against /Users/shydev/Amiko/openhermit/packages/store/src/schema.ts
--- (commit at time of authoring):
---   users           : (user_id PK, name, merged_into, created_at, updated_at)
---   user_identities : ((channel, channel_user_id) PK, user_id, created_at)
---
--- NOTE: there is no role column on users. Owner / member / guest are encoded
--- via channels (e.g. `cli` for owner) and/or `agent_policies` rows when
--- tasks need policy enforcement. Use this fixture as a baseline cast.
+-- No `role` column on `users`. Owner/member/guest are encoded via channels
+-- (e.g. `cli` for owner) and/or `agent_policies` rows for policy enforcement.
 
 INSERT INTO users (user_id, name, created_at, updated_at) VALUES
   ('u_owner',  'Alice (Owner)', NOW()::text, NOW()::text),

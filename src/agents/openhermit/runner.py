@@ -10,16 +10,15 @@ Drives one task end-to-end against the gateway HTTP API:
 * extracts token usage from `session_events.payload->'usage'` for assistant
   rows in Postgres.
 
-Verified API contracts (against /Users/shydev/Amiko/openhermit/apps/gateway/src/app.ts):
+Gateway API shapes:
 
-* ``POST /api/agents/{agentId}/sessions`` — body must be a ``SessionSpec``:
+* ``POST /api/agents/{agentId}/sessions`` — body: ``SessionSpec``
     ``{"sessionId": "<id>", "source": {"kind": "cli", "interactive": false}}``.
   Returns ``{"sessionId": "<id>"}``.
 * ``POST /api/agents/{agentId}/sessions/{sessionId}/messages?wait=true`` —
-  body must be a ``SessionMessage``: ``{"text": "..."}``. Returns a
-  ``SyncResponse`` ``{"sessionId", "messageId?", "text", "toolCalls", "error?"}``.
-* Auth header is ``Authorization: Bearer <admin_token>`` for all admin
-  ``/api/agents/*`` routes.
+  body: ``SessionMessage`` ``{"text": "..."}``. Returns ``SyncResponse``
+  ``{"sessionId", "messageId?", "text", "toolCalls", "error?"}``.
+* Auth header: ``Authorization: Bearer <admin_token>`` for all ``/api/agents/*`` routes.
 """
 from __future__ import annotations
 
@@ -97,10 +96,8 @@ class OpenHermitAgent(BaseAgent):
             )
             wait_for_gateway(spec.task_id, timeout_seconds=180)
 
-            # Configure agent + OpenRouter routing.
             self._configure_agent(spec.task_id, spec.model)
 
-            # Hit the gateway from the host via the published port.
             admin_token = read_admin_token(spec.task_id)
             host, port = discover_gateway_port(spec.task_id)
             base_url = f"http://{host}:{port}"
@@ -114,8 +111,6 @@ class OpenHermitAgent(BaseAgent):
             )
             elapsed = time.perf_counter() - start
 
-            # Store the session id and sync response in the output dir so the
-            # grader / debugger can replay.
             self._session_id_by_task[spec.task_id] = session_id
             out = Path(spec.output_dir)
             out.mkdir(parents=True, exist_ok=True)
@@ -124,7 +119,6 @@ class OpenHermitAgent(BaseAgent):
                 encoding="utf-8",
             )
 
-            # Dump Postgres for the grader.
             try:
                 dump_postgres(spec.task_id, out)
             except Exception as exc:  # noqa: BLE001
@@ -223,17 +217,7 @@ class OpenHermitAgent(BaseAgent):
     _session_id_by_task: dict[str, str] = {}
 
     def _configure_agent(self, task_id: str, model: str) -> None:
-        """Create + enable agent ``main``, set the OpenRouter key + model.
-
-        Verified flag order (Phase 2): ``--agent`` is a top-level flag that
-        comes BEFORE the ``config`` subcommand. ``secrets set`` reads the
-        value from positional args; we never put the API key on argv via
-        ``-e`` to keep it out of `docker inspect`. We send it through
-        ``docker exec``'s stdin-free positional call below; that's still
-        argv but is scoped to the container's own process, not the host's
-        `docker inspect` output.
-        """
-        # Step 1: create + enable the agent.
+        """Create + enable agent ``main``, set the OpenRouter key + model."""
         cmds = [
             "hermit agents create main || true",
             "hermit agents enable main || true",
@@ -245,15 +229,10 @@ class OpenHermitAgent(BaseAgent):
                 if "enable" in cmd:
                     raise RuntimeError(f"[{task_id}] {cmd} failed: {r.stderr}")
 
-        # Step 2: configure secret + model. Pass values via stdin-style
-        # heredoc through `bash -c` to avoid leaking the key into argv that
-        # other users on the container could see via `ps`. The container is
-        # ephemeral and root-only, but this keeps the secret out of any
-        # subshell `set -x` logs as well.
+        # shlex.quote keeps the API key off any `set -x` logs that might appear
+        # in the container's subshell output.
         key_q = shlex.quote(self.openrouter_api_key)
         model_q = shlex.quote(model)
-        # Verified: `--agent` is an option on `hermit config` itself (not on
-        # the top-level `hermit` command nor on the `set`/`secrets` subcommand).
         configure = (
             f"hermit config --agent main secrets set OPENROUTER_API_KEY {key_q} && "
             f"hermit config --agent main set model.provider openrouter && "

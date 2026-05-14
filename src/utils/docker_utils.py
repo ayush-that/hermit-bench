@@ -177,7 +177,6 @@ def collect_output_from_container(
     include_workspace_changes: bool = True,
 ) -> None:
     """Copy /tmp_workspace contents from the container to ``output_dir/task_output``."""
-    _ = include_workspace_changes
     target = output_dir / "task_output"
     target.mkdir(parents=True, exist_ok=True)
     subprocess.run(

@@ -2,7 +2,7 @@
 # hermit-bench/docker/seed_helpers.sh — source from per-task seed_post.sh.
 #
 # Small, idempotent wrappers around the `hermit` CLI for the bootstrap actions
-# tasks repeat a lot. The signatures match the verified 0.6.x CLI:
+# tasks repeat a lot. Flag placement quirks (hermit 0.6.x):
 #   - `hermit config` carries --agent at the TOP level (before the subcommand)
 #   - `hermit instructions set` carries --agent on the subcommand itself
 #   - `hermit skills register <id> --path ...`, then `hermit skills enable <id> --agent <a>`
@@ -38,9 +38,7 @@ hb_seed_skill() {
 
 hb_seed_memory_via_sql() {
   local agent="$1" key="$2" content="$3"
-  # Verified against schema.ts: the PK column is `memory_key`, NOT `key`, and
-  # `updated_at` is NOT NULL. We pass the content via psql dollar-quoting to
-  # tolerate apostrophes/newlines without escaping.
+  # psql dollar-quoting tolerates apostrophes and newlines in content without escaping.
   PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1 -c \
     "INSERT INTO memories (agent_id, memory_key, content, updated_at) VALUES ('$agent', '$key', \$\$${content}\$\$, NOW()::text) ON CONFLICT (agent_id, memory_key) DO UPDATE SET content = EXCLUDED.content, updated_at = EXCLUDED.updated_at;"
 }

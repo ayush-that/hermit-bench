@@ -222,12 +222,12 @@ def print_summary(results: list[dict], category: str, output_dir: Path, model_na
         all_scores[task_id] = final_score_val
 
     if all_scores:
-        print(f"\n  Final scores per task:")
+        print("\n  Final scores per task:")
         for k, score in sorted(all_scores.items()):
             bar = "█" * int(score * 10) + "░" * (10 - int(score * 10))
             print(f"    {bar} {score:.2f}  {k}")
 
-    print(f"\n  Token usage and cost per task:")
+    print("\n  Token usage and cost per task:")
     print(f"    {'Task ID':<55} {'Output Tokens':>12} {'Cost(USD)':>12}")
     print(f"    {'-'*55} {'-'*12} {'-'*12}")
     total_output_tokens = 0
@@ -289,7 +289,7 @@ def extract_usage_from_jsonl(jsonl_path: Path) -> dict:
 
 def print_global_summary(results: list[dict], output_dir: Path, model_name: str) -> None:
     print(f"\n{'#'*60}")
-    print(f"  Global Summary Report — ALL CATEGORIES")
+    print("  Global Summary Report — ALL CATEGORIES")
     print(f"{'#'*60}")
 
     total_tasks = len(results)

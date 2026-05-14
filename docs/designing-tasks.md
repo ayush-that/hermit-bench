@@ -63,7 +63,7 @@ OPENROUTER_API_KEY
 ```
 ```
 
-Field rules (verified in `src/utils/task_parser.py`):
+Field rules:
 
 - The file **must** open with `---`-delimited YAML frontmatter. `id` and `timeout_seconds` are read from there; everything else is parsed from `## ` headings.
 - `## Workspace Path` is **required**. It may be a relative path; the parser resolves it against the repo root.
