@@ -73,6 +73,23 @@ class OpenHermitAgent(BaseAgent):
 
     def run_task(self, spec: AgentTaskSpec) -> AgentExecution:
         try:
+            # Materialise task-supplied seed blocks into the workspace dir so
+            # the container's entrypoint picks them up (entrypoint.sh runs
+            # /tmp_workspace/seed.sql before the gateway boots, then
+            # /tmp_workspace/seed_post.sh after /health responds).
+            ws = Path(spec.workspace_path)
+            ws.mkdir(parents=True, exist_ok=True)
+            seed_sql = (spec.task.get("seed_sql") or "").strip()
+            seed_post = (spec.task.get("seed_post") or "").strip()
+            if seed_sql:
+                (ws / "seed.sql").write_text(seed_sql + "\n", encoding="utf-8")
+            else:
+                (ws / "seed.sql").unlink(missing_ok=True)
+            if seed_post:
+                (ws / "seed_post.sh").write_text(seed_post + "\n", encoding="utf-8")
+            else:
+                (ws / "seed_post.sh").unlink(missing_ok=True)
+
             start_container(
                 spec.task_id,
                 workspace_host=spec.workspace_path,

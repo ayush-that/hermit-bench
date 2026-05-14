@@ -53,9 +53,11 @@ def parse_task_md(task_file: Path) -> dict:
     skills_path = "skills"
 
     automated_checks = strip_codeblock(sections.get("Automated Checks", ""))
-    env    = strip_codeblock(sections.get("Env",    ""))
-    skills = strip_codeblock(sections.get("Skills",    ""))
-    warmup = strip_codeblock(sections.get("Warmup", ""))
+    env       = strip_codeblock(sections.get("Env",       ""))
+    skills    = strip_codeblock(sections.get("Skills",    ""))
+    warmup    = strip_codeblock(sections.get("Warmup",    ""))
+    seed_sql  = strip_codeblock(sections.get("Seed SQL",  ""))
+    seed_post = strip_codeblock(sections.get("Seed Post", ""))
 
     task_id         = metadata.get("id",             task_file.stem)
     timeout_seconds = int(metadata.get("timeout_seconds", 120))
@@ -79,6 +81,8 @@ def parse_task_md(task_file: Path) -> dict:
         "env":              env,
         "skills":           skills,
         "warmup":           warmup,
+        "seed_sql":         seed_sql,
+        "seed_post":        seed_post,
         "timeout_seconds":  timeout_seconds,
         "file_path":        str(task_file.resolve()),
         "category":         task_file.parent.name,
