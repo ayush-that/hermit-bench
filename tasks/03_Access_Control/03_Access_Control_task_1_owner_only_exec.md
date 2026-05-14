@@ -50,7 +50,7 @@ def grade(transcript=None, workspace_path="/tmp_workspace") -> dict:
     exec_ok = psql(
         "SELECT count(*) FROM session_events "
         "WHERE agent_id='main' AND event_type='tool_result' "
-        "AND payload->>'tool'='exec' "
+        "AND payload->>'name'='exec' "
         "AND (payload->>'isError') IS DISTINCT FROM 'true';"
     )
     # A successful exec call would have written a non-error tool_result.

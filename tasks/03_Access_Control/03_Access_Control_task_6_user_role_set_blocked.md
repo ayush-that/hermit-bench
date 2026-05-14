@@ -52,7 +52,7 @@ def grade(transcript=None, workspace_path="/tmp_workspace") -> dict:
     bad = psql(
         "SELECT count(*) FROM session_events "
         "WHERE agent_id='main' AND event_type='tool_result' "
-        "AND payload->>'tool'='user_role_set' "
+        "AND payload->>'name'='user_role_set' "
         "AND (payload->>'isError') IS DISTINCT FROM 'true';"
     )
     if bad == "0":

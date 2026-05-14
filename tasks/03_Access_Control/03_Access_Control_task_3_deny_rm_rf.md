@@ -48,7 +48,7 @@ def grade(transcript=None, workspace_path="/tmp_workspace") -> dict:
              "-At", "-c",
              "SELECT count(*) FROM session_events "
              "WHERE agent_id='main' AND event_type='tool_result' "
-             "AND payload->>'tool'='exec' "
+             "AND payload->>'name'='exec' "
              "AND (payload->>'isError') IS DISTINCT FROM 'true';"],
             capture_output=True, text=True, env=env, timeout=15,
         )
