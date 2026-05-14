@@ -8,55 +8,61 @@ timeout_seconds: 300
 ## Prompt
 
 The task instruction sent to the agent. Write it as if speaking directly to the agent.
+Workspace files (including any task data) are mounted at `/tmp_workspace/`.
 
-All input files are located under `/tmp_workspace/`. The agent should save outputs to `/tmp_workspace/results/`.
-
-**Important:** Do NOT use `##` (level-2 headings) inside the Prompt section. The parser splits sections by `##` headings, so a `##` here will truncate the prompt. Use `###` or lower for any sub-headings within the prompt.
+**Important:** Do NOT use `##` (level-2 headings) inside the Prompt section. The parser splits sections by `##` headings. Use `###` or lower for any sub-headings within the prompt.
 
 ## Expected Behavior
 
-Describe what a correct agent execution looks like, step by step. This section is for human readers only and is not sent to the agent.
+Human-only description of what a correct run looks like.
 
 ## Grading Criteria
 
 - [ ] Criterion 1
 - [ ] Criterion 2
-- [ ] ...
 
 ## Automated Checks
 
 ```python
-def grade(**kwargs) -> dict:
+def grade(transcript=None, workspace_path="/tmp_workspace") -> dict:
     """
-    Return a dict of metric_name -> float (0.0 to 1.0).
-    Must include an "overall_score" key.
-    Runs inside the container with cwd=/tmp_workspace.
+    Runs inside the container after the agent finishes. Has access to:
+    - /tmp_workspace/ (mounted host workspace + agent writes)
+    - Postgres at 127.0.0.1:5432 (db=hermit, user=hermit, password=hermit)
+    - `transcript` is the parsed gateway transcript (list of {role, content}).
+
+    Return a dict of metric -> float in [0, 1]. Must include "overall_score".
     """
-    scores = {}
-    # ... grading logic ...
-    scores["overall_score"] = 0.0
+    scores = {"overall_score": 0.0}
     return scores
 ```
 
 ## Workspace Path
 
 ```
-workspace/<category>/task_<N>_<short_name>
+fixtures/workspaces/<category>/<task_dir>
 ```
 
-## Skills
+## Seed SQL
 
+```sql
+-- Optional. Applied before gateway boot. Use to insert rows into the hermit DB
+-- (users, memories, instructions, agent_skills, agent_policies, schedules, ...).
+-- See docs/seed-format.md for verified table/column names.
 ```
+
+## Seed Post
+
+```bash
+# Optional. Runs after the gateway is healthy. Use for `hermit ...` CLI seeding
+# via /usr/local/bin/seed_helpers.sh (source it to get hb_seed_* helpers).
 ```
 
 ## Env
 
 ```
-```
-
-## Warmup
-
-```bash
+# Env var names whose values are forwarded into the container from the host .env.
+OPENROUTER_API_KEY
 ```
 
 <!--
@@ -65,18 +71,18 @@ workspace/<category>/task_<N>_<short_name>
 Frontmatter (YAML):
   - id:              Unique task identifier (must match filename pattern)
   - name:            Human-readable name
-  - category:        One of: 01_Productivity_Flow, 02_Code_Intelligence,
-                     03_Social_Interaction, 04_Search_Retrieval,
-                     05_Creative_Synthesis, 06_Safety_Alignment
+  - category:        One of: 01_CLI_Fluency, 02_Tool_Composition,
+                     03_Access_Control, 04_Channel_Routing,
+                     05_Memory_Introspection, 06_Scheduling_Automation
   - timeout_seconds: Max wall-clock time for the agent (default: 300)
 
-Sections:
-  - ## Prompt             Task instruction sent to the agent (required)
-  - ## Expected Behavior  Human-readable description of correct behavior
-  - ## Grading Criteria   Checklist of what is evaluated
-  - ## Automated Checks   Python grading function executed inside the container
-  - ## Workspace Path     Relative path to the task data directory (required)
-  - ## Skills             Skill names from skills/ to inject (one per line, leave empty if none)
-  - ## Env                Env var names to inject (one per line, values read from .env)
-  - ## Warmup             Shell commands to run before the agent starts (e.g. apt install)
+Sections (all parsed by src/utils/task_parser.py):
+  - ## Prompt              Task instruction sent to the agent (required)
+  - ## Expected Behavior   Human-readable description of correct behavior
+  - ## Grading Criteria    Checklist of what is evaluated
+  - ## Automated Checks    Python grading function executed inside the container
+  - ## Workspace Path      Relative path to the task data directory (required)
+  - ## Seed SQL            Raw SQL applied before gateway boots
+  - ## Seed Post           Bash script run after gateway is healthy
+  - ## Env                 Env var names to forward into the container
 -->
