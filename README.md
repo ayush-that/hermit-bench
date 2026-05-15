@@ -39,6 +39,21 @@ Per-task results land under `output/<category>/<task_id>/<model_timestamp_runid>
 
 Each task runs in its own Docker container that boots Postgres and an OpenHermit gateway. A per-task `seed.sql` plus workspace files establish a starting agent state. The runner sets `model.provider=openrouter` and `model.model=<args.model>`, then sends the task prompt to the agent via the OpenHermit SDK. After the agent exits (or times out), a grader Python function queries the Postgres state and the filesystem to compute scores. Token usage and cost are extracted from gateway logs.
 
+## Acknowledgements
+
+HermitBench's harness — Dockerized per-task containers, markdown task format with embedded graders, OpenRouter-driven cost-vs-performance reporting — is derived from [WildClawBench](https://github.com/InternLM/WildClawBench), which benchmarks the same kind of evaluation against [OpenClaw](https://github.com/openclaw/openclaw). If you use HermitBench in research, please also cite the upstream work:
+
+```bibtex
+@article{ding2026wildclawbench,
+  title={WildClawBench: A Benchmark for Real-World, Long-Horizon Agent Evaluation},
+  author={Ding, Shuangrui and Dai, Xuanlang and Xing, Long and Ding, Shengyuan and Liu, Ziyu and JingYi, Yang and Yang, Penghui and Zhang, Zhixiong and Wei, Xilin and Fang, Xinyu and others},
+  journal={arXiv preprint arXiv:2605.10912},
+  year={2026}
+}
+```
+
+For machine-readable HermitBench citation metadata see [`CITATION.cff`](CITATION.cff) — GitHub will use this file to populate the repository's "Cite this repository" panel.
+
 ## License
 
 MIT.
