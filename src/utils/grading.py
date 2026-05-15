@@ -75,11 +75,15 @@ def run_grading(
         "print(json.dumps(result))",
     ]) + "\n"
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".py", delete=False, encoding="utf-8"
-    ) as f:
-        f.write(runner_code)
-        runner_host = f.name
+    fd, runner_host = tempfile.mkstemp(prefix="grade_", suffix=".py")
+    try:
+        os.close(fd)
+        os.chmod(runner_host, 0o600)
+        with open(runner_host, "w", encoding="utf-8") as f:
+            f.write(runner_code)
+    except Exception:
+        Path(runner_host).unlink(missing_ok=True)
+        raise
 
     try:
         r_loader = subprocess.run(
