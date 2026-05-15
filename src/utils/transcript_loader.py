@@ -65,11 +65,16 @@ def _load_from_postgres(agent_id: str = "main") -> list[dict[str, Any]]:
     ``role`` field is derived from ``event_type`` (`user` / `assistant` /
     `tool_call` / etc.) so existing graders that look at ``msg["role"]`` work.
     """
+    # Pass the agent id as a psql variable and use :'agent' quoting so the
+    # value is escaped as a SQL string literal by psql itself — no manual
+    # quote-doubling needed. Matches the pattern used in docker/seed_helpers.sh.
+    # NB: psql expands :'var' only in scripts read from stdin or -f, NOT in
+    # -c, so we pipe the SQL through stdin.
     sql = (
         "SELECT ts, event_type, COALESCE(content, ''), payload::text "
         "FROM session_events "
-        "WHERE agent_id='%s' "
-        "ORDER BY id;" % agent_id.replace("'", "''")
+        "WHERE agent_id = :'agent' "
+        "ORDER BY id;"
     )
     env = os.environ.copy()
     env.setdefault("PGPASSWORD", "hermit")
@@ -81,8 +86,9 @@ def _load_from_postgres(agent_id: str = "main") -> list[dict[str, Any]]:
                 "-d", "hermit",
                 "-h", "127.0.0.1",
                 "-At", "-F", "\t",
-                "-c", sql,
+                "-v", f"agent={agent_id}",
             ],
+            input=sql,
             capture_output=True,
             text=True,
             env=env,
