@@ -65,18 +65,26 @@ def wait_for_gateway(task_id: str, timeout_seconds: int = 120) -> None:
     deadline = time.time() + timeout_seconds
     last_err = ""
     while time.time() < deadline:
-        r = subprocess.run(
-            [
-                "docker",
-                "exec",
-                task_id,
-                "curl",
-                "-fsS",
-                "http://127.0.0.1:4000/health",
-            ],
-            capture_output=True,
-            text=True,
-        )
+        try:
+            r = subprocess.run(
+                [
+                    "docker",
+                    "exec",
+                    task_id,
+                    "curl",
+                    "-fsS",
+                    "http://127.0.0.1:4000/health",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except subprocess.TimeoutExpired:
+            # A single probe got stuck; treat as a failed attempt and let the
+            # outer deadline loop decide whether to retry.
+            last_err = "probe timed out after 10s"
+            time.sleep(2)
+            continue
         if r.returncode == 0:
             return
         last_err = r.stderr.strip() or r.stdout.strip()
