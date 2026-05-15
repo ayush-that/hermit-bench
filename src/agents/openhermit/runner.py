@@ -124,14 +124,22 @@ class OpenHermitAgent(BaseAgent):
                 encoding="utf-8",
             )
 
-            try:
-                dump_postgres(spec.task_id, out)
-            except Exception as exc:  # noqa: BLE001
-                logger.warning("[%s] pg_dump failed: %s", spec.task_id, exc)
-
             error: str | None = None
             if isinstance(sync, dict) and sync.get("error"):
                 error = str(sync["error"])
+
+            try:
+                dump_postgres(spec.task_id, out)
+            except Exception as exc:  # noqa: BLE001
+                # A failed pg_dump means the grader will see an empty / stale
+                # DB snapshot and silently mis-score the task. Surface it as
+                # the run error (unless the agent already errored, in which
+                # case the agent error is the more useful root cause).
+                msg = f"pg_dump failed: {exc}"
+                logger.error("[%s] %s", spec.task_id, msg)
+                if error is None:
+                    error = msg
+
             return AgentExecution(elapsed_time=elapsed, error=error)
 
         except Exception as exc:  # noqa: BLE001
