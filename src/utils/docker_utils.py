@@ -149,11 +149,15 @@ def run_background(
     """Run a long-running command inside the container, streaming stdout/stderr to ``log_path``."""
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_file = open(log_path, "wb")
-    proc = subprocess.Popen(
-        ["docker", "exec", task_id, "/bin/bash", "-lc", bash_cmd],
-        stdout=log_file,
-        stderr=subprocess.STDOUT,
-    )
+    try:
+        proc = subprocess.Popen(
+            ["docker", "exec", task_id, "/bin/bash", "-lc", bash_cmd],
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+        )
+    except Exception:
+        log_file.close()
+        raise
     proc._log_file = log_file  # type: ignore[attr-defined]
     return proc
 
@@ -202,6 +206,10 @@ def dump_postgres(task_id: str, output_dir: Path) -> None:
         text=True,
         timeout=120,
     )
+    if r.returncode != 0:
+        raise RuntimeError(
+            f"[{task_id}] pg_dump failed (rc={r.returncode}): {r.stderr.strip()}"
+        )
     target.write_text(r.stdout, encoding="utf-8")
 
 
