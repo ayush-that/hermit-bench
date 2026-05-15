@@ -272,35 +272,48 @@ class OpenHermitAgent(BaseAgent):
                 f"{cp.stderr.decode('utf-8', 'replace').strip()}"
             )
 
+        # Run each config step as its own exec so one failure doesn't leave
+        # the agent in a half-configured state with no clue which step blew
+        # up. The OpenRouter key is consumed from the streamed tempfile via
+        # `sh -c "$(cat ...)"` so it never appears in argv. We use bash -lc
+        # so the container's profile (/etc/profile.d/hermitbench.sh) is
+        # sourced and the hermit CLI sees the gateway admin token.
         model_q = shlex.quote(model)
-        # `hermit config secrets set` consumes the key from the file we just
-        # streamed in, then we shred it. Errors from each step are checked
-        # individually (see #9) but the configure call is bundled here to keep
-        # the shred always running.
-        script = (
-            "set -e; "
-            "hermit config --agent main secrets set OPENROUTER_API_KEY "
-            '"$(cat /tmp/.openrouter_key)"; '
-            f"hermit config --agent main set model.provider openrouter; "
-            f"hermit config --agent main set model.model {model_q}"
-        )
+        steps: list[tuple[str, list[str]]] = [
+            (
+                "secrets set OPENROUTER_API_KEY",
+                ["docker", "exec", "-i", task_id, "/bin/bash", "-lc",
+                 'hermit config --agent main secrets set '
+                 'OPENROUTER_API_KEY "$(cat /tmp/.openrouter_key)"'],
+            ),
+            (
+                "set model.provider",
+                ["docker", "exec", task_id, "/bin/bash", "-lc",
+                 "hermit config --agent main set model.provider openrouter"],
+            ),
+            (
+                "set model.model",
+                ["docker", "exec", task_id, "/bin/bash", "-lc",
+                 f"hermit config --agent main set model.model {model_q}"],
+            ),
+        ]
         try:
-            r = subprocess.run(
-                ["docker", "exec", "-i", task_id, "sh", "-c", script],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
+            for label, argv in steps:
+                r = subprocess.run(
+                    argv, capture_output=True, text=True, timeout=60
+                )
+                if r.returncode != 0:
+                    raise RuntimeError(
+                        f"[{task_id}] hermit config step '{label}' failed "
+                        f"(rc={r.returncode}): stdout={r.stdout.strip()} "
+                        f"stderr={r.stderr.strip()}"
+                    )
         finally:
             subprocess.run(
                 ["docker", "exec", task_id, "sh", "-c",
-                 "shred -u /tmp/.openrouter_key 2>/dev/null || rm -f /tmp/.openrouter_key"],
+                 "shred -u /tmp/.openrouter_key 2>/dev/null || "
+                 "rm -f /tmp/.openrouter_key"],
                 capture_output=True,
-            )
-        if r.returncode != 0:
-            raise RuntimeError(
-                f"[{task_id}] hermit config failed (rc={r.returncode}): "
-                f"stdout={r.stdout.strip()} stderr={r.stderr.strip()}"
             )
 
     # -- HTTP ----------------------------------------------------------
