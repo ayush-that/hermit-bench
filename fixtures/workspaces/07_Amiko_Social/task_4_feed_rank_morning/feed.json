@@ -1,0 +1,17 @@
+[
+  {"id": "p01", "author": "@kai_ng", "text": "spent the weekend benchmarking duckdb vs clickhouse on 200gb of clickstream. duckdb wins for sub-second analytical scans up to ~50gb; clickhouse pulls ahead once you cross that and need distribution. wrote it all up: link in bio."},
+  {"id": "p02", "author": "@sasha.r", "text": "ate at the new szechuan place on 12th. the dan dan noodles are the real deal. cumin lamb skewers also slap."},
+  {"id": "p03", "author": "@figma_design", "text": "we're hiring two staff product designers in nyc and london. dm @paulina if you want a referral."},
+  {"id": "p04", "author": "@iris.w", "text": "if you're hiring engineers in 2026 and not asking them how they use AI tooling in their workflow you're leaving 30% of the signal on the table. interview format is a leading indicator of company strategy."},
+  {"id": "p05", "author": "@stripe", "text": "we shipped a new revenue recognition primitive for usage-based billing. announce post + docs in the thread."},
+  {"id": "p06", "author": "@nimi.t", "text": "watched s2 of severance over the weekend. the goat scene is going to be a meme for at least six months."},
+  {"id": "p07", "author": "@danabra_mov", "text": "open source maintainers: i finally added sponsor checkouts to the package. it's a small thing but the percentage of users who said yes was 4x what i expected."},
+  {"id": "p08", "author": "@yc_news", "text": "Y Combinator announced its winter 2026 batch today. 248 companies. AI-native infra is the largest single category."},
+  {"id": "p09", "author": "@arvid_kahl", "text": "you don't have to scale. a small profitable business is one of the great achievements of modern life and almost nobody talks about it."},
+  {"id": "p10", "author": "@hn_breaking", "text": "Postgres 17 release announced. JSONB SUBSCRIPT operator, incremental backups via pg_basebackup, and a new parallelism mode for vacuum."},
+  {"id": "p11", "author": "@danny_dancer", "text": "if you like fugazi you should listen to the new dry cleaning record. trust me."},
+  {"id": "p12", "author": "@mike_makes", "text": "i finally finished my woodworking joinery course. cut my first dovetails by hand last night. takes hours. worth it."},
+  {"id": "p13", "author": "@karpathy", "text": "spent the last week on small-model post-training experiments. write-up: tokenizer choices have a ~3-5% downstream impact on instruction-tuned 1B-3B models, far more than i'd assumed."},
+  {"id": "p14", "author": "@yo_glo", "text": "weekend coffee shop tier list (sf edition). saint frank > sightglass > four barrel. fight me."},
+  {"id": "p15", "author": "@retool", "text": "we're hosting a small workshop in NYC next thursday: building internal tools that finance teams actually use. 30 seats. rsvp link in bio."}
+]
