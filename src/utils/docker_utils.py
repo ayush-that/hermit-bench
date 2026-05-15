@@ -193,7 +193,16 @@ def close_proc_log(bg: BackgroundProc | None) -> None:
 
 
 def remove_container(task_id: str) -> None:
-    subprocess.run(["docker", "rm", "-f", task_id], capture_output=True, text=True)
+    r = subprocess.run(
+        ["docker", "rm", "-f", task_id], capture_output=True, text=True
+    )
+    if r.returncode != 0:
+        # A failure here is usually benign (container already gone) but
+        # occasionally points at a leaked container we ought to know about.
+        logger.warning(
+            "docker rm -f %s exited %d: %s",
+            task_id, r.returncode, r.stderr.strip(),
+        )
 
 
 def collect_output_from_container(
