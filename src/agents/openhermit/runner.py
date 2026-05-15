@@ -22,9 +22,12 @@ Gateway API shapes:
 """
 from __future__ import annotations
 
+import io
 import json
 import logging
 import shlex
+import subprocess
+import tarfile
 import time
 import urllib.error
 import urllib.request
@@ -231,16 +234,59 @@ class OpenHermitAgent(BaseAgent):
                 if "enable" in cmd:
                     raise RuntimeError(f"[{task_id}] {cmd} failed: {r.stderr}")
 
-        # shlex.quote keeps the API key off any `set -x` logs that might appear
-        # in the container's subshell output.
-        key_q = shlex.quote(self.openrouter_api_key)
+        # Pass the OpenRouter key via a tar-streamed file on stdin so the secret
+        # never appears in `docker inspect <container>` (which records the
+        # argv of every `docker exec`). The key is shredded immediately after
+        # `hermit config` consumes it.
+        self._configure_openrouter(task_id, model)
+
+    def _configure_openrouter(self, task_id: str, model: str) -> None:
+        key_bytes = self.openrouter_api_key.encode("utf-8")
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w") as tar:
+            info = tarfile.TarInfo(name=".openrouter_key")
+            info.size = len(key_bytes)
+            info.mode = 0o600
+            tar.addfile(info, io.BytesIO(key_bytes))
+        tar_blob = buf.getvalue()
+
+        # `docker cp - <ctr>:<dir>` extracts a tar stream into <dir>.
+        cp = subprocess.run(
+            ["docker", "cp", "-", f"{task_id}:/tmp"],
+            input=tar_blob,
+            capture_output=True,
+        )
+        if cp.returncode != 0:
+            raise RuntimeError(
+                f"[{task_id}] docker cp openrouter key failed: "
+                f"{cp.stderr.decode('utf-8', 'replace').strip()}"
+            )
+
         model_q = shlex.quote(model)
-        configure = (
-            f"hermit config --agent main secrets set OPENROUTER_API_KEY {key_q} && "
-            f"hermit config --agent main set model.provider openrouter && "
+        # `hermit config secrets set` consumes the key from the file we just
+        # streamed in, then we shred it. Errors from each step are checked
+        # individually (see #9) but the configure call is bundled here to keep
+        # the shred always running.
+        script = (
+            "set -e; "
+            "hermit config --agent main secrets set OPENROUTER_API_KEY "
+            '"$(cat /tmp/.openrouter_key)"; '
+            f"hermit config --agent main set model.provider openrouter; "
             f"hermit config --agent main set model.model {model_q}"
         )
-        r = exec_in_container(task_id, configure, timeout=60)
+        try:
+            r = subprocess.run(
+                ["docker", "exec", "-i", task_id, "sh", "-c", script],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        finally:
+            subprocess.run(
+                ["docker", "exec", task_id, "sh", "-c",
+                 "shred -u /tmp/.openrouter_key 2>/dev/null || rm -f /tmp/.openrouter_key"],
+                capture_output=True,
+            )
         if r.returncode != 0:
             raise RuntimeError(
                 f"[{task_id}] hermit config failed (rc={r.returncode}): "
