@@ -107,7 +107,9 @@ class OpenHermitAgent(BaseAgent):
             host, port = discover_gateway_port(spec.task_id)
             base_url = f"http://{host}:{port}"
 
-            session_id = f"cli:{uuid.uuid4().hex[:12]}"
+            # Full 32-hex uuid keeps the session-id space wide enough that two
+            # concurrent runs (or replays after a crash) can't collide.
+            session_id = f"cli:{uuid.uuid4().hex}"
             start = time.perf_counter()
             self._open_session(base_url, admin_token, "main", session_id)
             sync = self._post_message_sync(
@@ -323,6 +325,14 @@ class OpenHermitAgent(BaseAgent):
         sid = body.get("sessionId") if isinstance(body, dict) else None
         if not sid:
             raise RuntimeError(f"open_session: unexpected response {body!r}")
+        if sid != session_id:
+            # The gateway has historically accepted a client-supplied id and
+            # echoed it back. If a future version starts minting its own id,
+            # subsequent /messages calls would be sent against the wrong sid.
+            raise RuntimeError(
+                f"open_session: gateway returned sessionId={sid!r}, "
+                f"expected {session_id!r}"
+            )
         return sid
 
     def _post_message_sync(
