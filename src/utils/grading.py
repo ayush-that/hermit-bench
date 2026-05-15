@@ -71,7 +71,7 @@ def run_grading(
         "",
         automated_checks,
         "",
-        f'result = grade(transcript=_transcript, workspace_path="{TMP_WORKSPACE}")',
+        f"result = grade(transcript=_transcript, workspace_path={json.dumps(TMP_WORKSPACE)})",
         "print(json.dumps(result))",
     ]) + "\n"
 
