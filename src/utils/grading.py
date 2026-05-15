@@ -64,9 +64,20 @@ def run_grading(
             write_error_score,
         )
 
+    judge_src = Path(__file__).with_name("judge.py")
+    if not judge_src.exists():
+        logger.error("[%s] judge module not found: %s", task_id, judge_src)
+        return _grading_error(
+            output_dir,
+            task_id,
+            f"judge module not found: {judge_src}",
+            write_error_score,
+        )
+
     runner_code = "\n".join([
         "import json",
         "from _transcript_loader import load_transcript",
+        "from _judge import judge",
         f"_transcript = load_transcript({json.dumps(transcript_container_path)})",
         "",
         automated_checks,
@@ -96,6 +107,19 @@ def run_grading(
                 output_dir,
                 task_id,
                 f"docker cp transcript loader failed: {r_loader.stderr}",
+                write_error_score,
+            )
+
+        r_judge = subprocess.run(
+            ["docker", "cp", str(judge_src), f"{task_id}:/tmp/_judge.py"],
+            capture_output=True, text=True,
+        )
+        if r_judge.returncode != 0:
+            logger.error("[%s] docker cp judge failed: %s", task_id, r_judge.stderr)
+            return _grading_error(
+                output_dir,
+                task_id,
+                f"docker cp judge failed: {r_judge.stderr}",
                 write_error_score,
             )
 
@@ -135,7 +159,7 @@ def run_grading(
             ["docker", "exec", *env_args, task_id, "python3", "/tmp/_grade_runner.py"],
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=240,
         )
         if r.returncode != 0:
             logger.error("[%s] Grading script execution failed: %s", task_id, r.stderr)
