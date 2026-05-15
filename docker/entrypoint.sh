@@ -53,7 +53,8 @@ EOF
 
 if [ -f /tmp_workspace/seed.sql ]; then
   echo "[entrypoint] applying seed.sql"
-  PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1 -f /tmp_workspace/seed.sql
+  PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1 \
+    -v ON_ERROR_STOP=1 -f /tmp_workspace/seed.sql
 fi
 
 # Start the gateway. `hermit gateway run` is the foreground command (no flags;

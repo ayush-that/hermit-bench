@@ -44,6 +44,7 @@ hb_seed_memory_via_sql() {
   # close the literal by embedding "$$".
   local tag="hb$RANDOM$RANDOM"
   PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1 \
+    -v ON_ERROR_STOP=1 \
     -v agent="$agent" -v memkey="$key" -v tag="$tag" <<SQL
 INSERT INTO memories (agent_id, memory_key, content, updated_at)
 VALUES (:'agent', :'memkey', \$${tag}\$${content}\$${tag}\$, NOW()::text)
