@@ -11,7 +11,9 @@ import logging
 import os
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
+from typing import IO
 
 logger = logging.getLogger(__name__)
 
@@ -151,9 +153,21 @@ def exec_in_container(
     )
 
 
+@dataclass
+class BackgroundProc:
+    """A Popen handle paired with its captured log file.
+
+    Replaces the previous pattern of stashing ``log_file`` on a private
+    Popen attribute (``proc._log_file``), which mypy/pylint flag and is
+    fragile to future Popen API changes.
+    """
+    proc: subprocess.Popen
+    log_file: IO[bytes] | None
+
+
 def run_background(
     task_id: str, bash_cmd: str, log_path: Path
-) -> subprocess.Popen[bytes]:
+) -> BackgroundProc:
     """Run a long-running command inside the container, streaming stdout/stderr to ``log_path``."""
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_file = open(log_path, "wb")
@@ -166,17 +180,16 @@ def run_background(
     except Exception:
         log_file.close()
         raise
-    proc._log_file = log_file  # type: ignore[attr-defined]
-    return proc
+    return BackgroundProc(proc=proc, log_file=log_file)
 
 
-def close_proc_log(proc: subprocess.Popen) -> None:
-    log_file = getattr(proc, "_log_file", None)
-    if log_file:
-        try:
-            log_file.close()
-        except Exception:
-            pass
+def close_proc_log(bg: BackgroundProc | None) -> None:
+    if bg is None or bg.log_file is None:
+        return
+    try:
+        bg.log_file.close()
+    except Exception:
+        pass
 
 
 def remove_container(task_id: str) -> None:

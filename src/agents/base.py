@@ -4,7 +4,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 import subprocess
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.utils.docker_utils import BackgroundProc
 
 
 @dataclass(frozen=True)
@@ -26,7 +29,7 @@ class AgentExecution:
     elapsed_time: float
     error: str | None = None
     gateway_proc: subprocess.Popen[str] | None = None
-    agent_proc: subprocess.Popen[str] | None = None
+    agent_proc: "BackgroundProc | None" = None
 
 
 class BaseAgent(ABC):
