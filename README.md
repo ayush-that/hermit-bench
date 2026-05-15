@@ -22,6 +22,7 @@ Unlike CLI-agent benchmarks that test file-and-shell skills in isolation, Hermit
 | 04 | Channel Routing | Cross-channel session continuity, group routing rules |
 | 05 | Memory & Introspection | Long-term memory recall, working memory updates |
 | 06 | Scheduling & Automation | Cron jobs, one-shot schedules, run history |
+| 07 | Amiko Social | Post drafting, comment voice, AI-twin DMs, feed rank, privacy, group dynamics — Opus-judged for quality |
 
 ## Quick Start
 
@@ -32,10 +33,20 @@ bash script/prepare.sh
 # 2. Set OpenRouter API key
 echo 'OPENROUTER_API_KEY=sk-or-...' >> .env
 
-# 3. Run all 60 tasks against a model
+# 3. (Optional) Pick a judge model for category 07_Amiko_Social.
+#    Tasks in 07 grade prose quality via an LLM-as-judge call to OpenRouter
+#    using JUDGE_MODEL (default: anthropic/claude-opus-4.7).
+echo 'JUDGE_MODEL=anthropic/claude-opus-4.7' >> .env
+
+# 4. Run all tasks against a model
 bash script/run.sh --category all --parallel 4 \
   --model anthropic/claude-sonnet-4.6
 ```
+
+> Category 07 requires `OPENROUTER_API_KEY` (for the judge call) and reads
+> `JUDGE_MODEL` from the environment. Each judge call costs roughly $0.01
+> with `anthropic/claude-opus-4.7`; if you want to bench-test on the cheap,
+> set `JUDGE_MODEL=anthropic/claude-haiku-4.7` or similar.
 
 Per-task results land under `output/<category>/<task_id>/<model_timestamp_runid>/` with `score.json`, `usage.json`, `gateway.log`, and the seeded Postgres dump.
 

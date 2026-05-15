@@ -170,6 +170,71 @@ Non-numeric keys (e.g. `"error": "..."`) are preserved but ignored by the aggreg
 
 If your grader needs an API key (e.g. for an LLM-as-judge call) or any host env var, list its name in `## Env`. The harness forwards `-e <NAME>=<value>` from the host environment into the grader's `docker exec`. Never put secrets in the task file itself.
 
+### Judge-based grading
+
+For tasks where the correct answer is a piece of prose (drafted post, DM reply, comment voice) deterministic regex checks can't grade quality. The harness exposes `judge(...)` inside the grader container so you can call an LLM-as-judge:
+
+```python
+def grade(transcript=None, workspace_path="/tmp_workspace") -> dict:
+    from _judge import judge, last_assistant_content
+
+    # Pull the last assistant message. Prefer the transcript, but fall back
+    # to last_assistant_content() — the default loader can drop multi-line
+    # assistant replies because it splits psql output on newlines.
+    last_assistant = ""
+    if transcript:
+        for msg in transcript:
+            if (msg.get("role") or msg.get("event_type")) == "assistant":
+                if (msg.get("content") or "").strip():
+                    last_assistant = msg["content"]
+    if not last_assistant:
+        last_assistant = last_assistant_content().strip()
+    if not last_assistant:
+        return {"overall_score": 0.0, "error": "no assistant output"}
+
+    rubric = {
+        # name -> one-line description of what scores 1.0
+        "length_60_to_120_words":   "the post is 60-120 words inclusive",
+        "voice_match_lowercase":    "reads lowercase, short sentences, no emojis",
+        "captures_original_thought":"the post is clearly about roadmaps being wishlists",
+        "no_cliches":               "no LinkedIn-cliche phrases ('at the end of the day' etc.)",
+        "no_preamble_or_quotes":    "the response is the post body only",
+    }
+
+    result = judge(
+        task_prompt="Draft a 60-120 word post in the user's voice ...",
+        agent_output=last_assistant,
+        rubric=rubric,
+        context="Voice samples: ...\nStyle: lowercase, short, no emojis.",
+    )
+
+    out = dict(result.get("rubric_scores") or {})
+    out["overall_score"] = float(result.get("overall_score", 0.0))
+    out["judge_reasoning"] = result.get("reasoning", "")
+    out["judge_cost_usd"] = float((result.get("judge_usage") or {}).get("cost_usd", 0.0))
+    return out
+```
+
+The judge model is read from `JUDGE_MODEL` (default `anthropic/claude-opus-4.7`); the API key from `OPENROUTER_API_KEY`. Both must be declared in `## Env` so the harness forwards them into the grader container:
+
+```
+## Env
+
+```
+OPENROUTER_API_KEY
+JUDGE_MODEL
+```
+```
+
+Rubric design rules:
+
+- **Specific and falsifiable.** "Is this good?" is bad; "stays under 280 chars" is good; "does not use the phrase 'great post!'" is good.
+- **3-6 criteria.** Fewer than 3 and a single bad judgement dominates the score; more than 6 and the judge stops attending to each one.
+- **One criterion per axis.** Don't combine length and tone into a single bullet — judge separately so a failure is diagnosable.
+- **Hard gates where appropriate.** If leaking a specific number ($182,000) is a strict policy violation, add a Python check that hard-zeros the "did_not_leak" criterion when the regex matches the number verbatim — don't rely solely on the judge.
+
+The judge never raises. On network/parse error you get `{"overall_score": 0.0, "error": "...", "judge_model": ..., "judge_usage": {}}`, so your grader can always return numeric scores.
+
 ## Workspace fixtures
 
 `## Workspace Path` points at a host directory that gets bind-mounted at `/tmp_workspace`. Use it for:
