@@ -1,0 +1,22 @@
+[
+  {"i": 1, "author": "kai",  "ts": "09:02", "text": "morning all — reviewing the launch checklist for tomorrow. who owns the marketing site update?"},
+  {"i": 2, "author": "sasha", "ts": "09:03", "text": "that's me. i'll push the new hero copy + screenshots by 4pm today."},
+  {"i": 3, "author": "kai",  "ts": "09:04", "text": "great. and the changelog post — me or you, mike?"},
+  {"i": 4, "author": "mike", "ts": "09:05", "text": "i'll take the changelog. due end of day tomorrow before we go live."},
+  {"i": 5, "author": "amira", "ts": "09:07", "text": "can someone double-check stripe is in live mode in production env vars? i tested staging yesterday and webhook secret was test-mode."},
+  {"i": 6, "author": "mike", "ts": "09:08", "text": "i'll check the env vars today. not tomorrow — today."},
+  {"i": 7, "author": "sasha", "ts": "09:09", "text": "also reminder: legal needs to sign off on the ToS update before launch. did anyone hear back from them?"},
+  {"i": 8, "author": "kai",  "ts": "09:10", "text": "i pinged sara from legal yesterday, no reply. i'll follow up this afternoon."},
+  {"i": 9, "author": "amira", "ts": "09:11", "text": "we should also have someone monitoring during the rollout window."},
+  {"i": 10, "author": "amira", "ts": "09:11", "text": "i can take the 10am-12pm slot tomorrow."},
+  {"i": 11, "author": "mike", "ts": "09:12", "text": "i can take 12-2pm."},
+  {"i": 12, "author": "kai",  "ts": "09:13", "text": "i'll do 2pm-4pm. sasha?"},
+  {"i": 13, "author": "sasha", "ts": "09:14", "text": "i've got a customer call at 4 — but i can do 4-6pm if we push the call."},
+  {"i": 14, "author": "kai",  "ts": "09:14", "text": "let's say sasha 4-6 contingent on the call moving."},
+  {"i": 15, "author": "amira", "ts": "09:18", "text": "btw the staging deploy is broken right now, npm install fails on the lockfile. kai when you're free can you take a look?"},
+  {"i": 16, "author": "kai",  "ts": "09:19", "text": "ugh ok i'll look at the lockfile this morning."},
+  {"i": 17, "author": "sasha", "ts": "09:22", "text": "love this. lunch tomorrow on me if launch goes smooth."},
+  {"i": 18, "author": "mike", "ts": "09:23", "text": "ha. won't say no."},
+  {"i": 19, "author": "amira", "ts": "09:24", "text": "what time is the post-launch retro? wednesday?"},
+  {"i": 20, "author": "kai",  "ts": "09:25", "text": "wednesday 10am. i'll send a cal invite."}
+]

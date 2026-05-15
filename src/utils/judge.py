@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import urllib.error
 import urllib.request
 from typing import Any
@@ -176,6 +177,51 @@ def _is_transient_error(exc: Exception) -> bool:
     if isinstance(exc, TimeoutError):
         return True
     return False
+
+
+def last_assistant_content(agent_id: str = "main") -> str:
+    """Return the most recent assistant message content from session_events.
+
+    The default transcript loader splits psql output on newlines, which loses
+    multi-line assistant replies (the row gets dropped because it parses into
+    too few tab-separated fields). This helper queries the payload JSON
+    directly, which psql serialises on a single line, so it survives
+    arbitrary newlines and tabs in the content.
+    """
+    env = os.environ.copy()
+    env.setdefault("PGPASSWORD", "hermit")
+    sql = (
+        "SELECT payload::text FROM session_events "
+        f"WHERE agent_id = '{agent_id}' AND event_type = 'assistant' "
+        "ORDER BY id DESC LIMIT 1;"
+    )
+    try:
+        r = subprocess.run(
+            [
+                "psql",
+                "-U", "hermit",
+                "-d", "hermit",
+                "-h", "127.0.0.1",
+                "-At",
+                "-c", sql,
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=20,
+        )
+    except (FileNotFoundError, subprocess.SubprocessError):
+        return ""
+    if r.returncode != 0 or not r.stdout.strip():
+        return ""
+    try:
+        payload = json.loads(r.stdout.strip())
+    except Exception:
+        return ""
+    content = payload.get("content") if isinstance(payload, dict) else None
+    if isinstance(content, str):
+        return content
+    return ""
 
 
 def judge(
