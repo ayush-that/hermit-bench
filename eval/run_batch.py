@@ -205,21 +205,32 @@ def main() -> None:
             for t in tasks:
                 results.append(run_single_task(t, args.model, backend, output_root))
         else:
-            with ThreadPoolExecutor(max_workers=args.parallel) as pool:
+            pool = ThreadPoolExecutor(max_workers=args.parallel)
+            try:
                 futures = {
                     pool.submit(run_single_task, t, args.model, backend, output_root): t[
                         "task_id"
                     ]
                     for t in tasks
                 }
-                for f in as_completed(futures):
-                    try:
-                        results.append(f.result())
-                    except Exception as exc:  # noqa: BLE001
-                        tid = futures[f]
-                        results.append(
-                            {"task_id": tid, "scores": {}, "error": str(exc)}
-                        )
+                try:
+                    for f in as_completed(futures):
+                        try:
+                            results.append(f.result())
+                        except Exception as exc:  # noqa: BLE001
+                            tid = futures[f]
+                            results.append(
+                                {"task_id": tid, "scores": {}, "error": str(exc)}
+                            )
+                except KeyboardInterrupt:
+                    logger.warning(
+                        "KeyboardInterrupt during batch — cancelling pending tasks"
+                    )
+                    pool.shutdown(wait=False, cancel_futures=True)
+                    _cleanup_hb_containers()
+                    raise
+            finally:
+                pool.shutdown(wait=True)
         print_summary(results, category, output_root, safe_model)
         all_results.extend(results)
 
