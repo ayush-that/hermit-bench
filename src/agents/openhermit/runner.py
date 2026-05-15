@@ -38,7 +38,6 @@ from src.utils.docker_utils import (
     dump_postgres,
     exec_in_container,
     read_admin_token,
-    remove_container,
     start_container,
     wait_for_gateway,
 )
@@ -56,6 +55,9 @@ class OpenHermitAgent(BaseAgent):
     ) -> None:
         self.openrouter_api_key = openrouter_api_key
         self.openrouter_base_url = openrouter_base_url
+        # Per-instance map of task_id -> session_id. Must NOT be a class-level
+        # default; concurrent batch runs would otherwise share state.
+        self._session_id_by_task: dict[str, str] = {}
 
     @property
     def expects_gateway(self) -> bool:
@@ -162,7 +164,8 @@ class OpenHermitAgent(BaseAgent):
             if session_file.exists():
                 try:
                     session_id = json.loads(session_file.read_text()).get("sessionId")
-                except Exception:
+                except (json.JSONDecodeError, OSError) as exc:
+                    logger.warning("[%s] could not recover session id: %s", task_id, exc)
                     session_id = None
         if not session_id:
             return usage
@@ -214,7 +217,6 @@ class OpenHermitAgent(BaseAgent):
         return self.transcript_container_path
 
     # ------------------------------------------------------------------ helpers
-    _session_id_by_task: dict[str, str] = {}
 
     def _configure_agent(self, task_id: str, model: str) -> None:
         """Create + enable agent ``main``, set the OpenRouter key + model."""
