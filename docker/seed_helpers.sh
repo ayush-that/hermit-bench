@@ -38,9 +38,19 @@ hb_seed_skill() {
 
 hb_seed_memory_via_sql() {
   local agent="$1" key="$2" content="$3"
-  # psql dollar-quoting tolerates apostrophes and newlines in content without escaping.
-  PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1 -c \
-    "INSERT INTO memories (agent_id, memory_key, content, updated_at) VALUES ('$agent', '$key', \$\$${content}\$\$, NOW()::text) ON CONFLICT (agent_id, memory_key) DO UPDATE SET content = EXCLUDED.content, updated_at = EXCLUDED.updated_at;"
+  # Use psql -v variables with :'name' quoting so agent/key are passed as
+  # properly-quoted string literals (no SQL-injection risk). Content goes via
+  # stdin and is dollar-quoted with a randomised tag so the caller can't
+  # close the literal by embedding "$$".
+  local tag="hb$RANDOM$RANDOM"
+  PGPASSWORD=hermit psql -U hermit -d hermit -h 127.0.0.1 \
+    -v agent="$agent" -v memkey="$key" -v tag="$tag" <<SQL
+INSERT INTO memories (agent_id, memory_key, content, updated_at)
+VALUES (:'agent', :'memkey', \$${tag}\$${content}\$${tag}\$, NOW()::text)
+ON CONFLICT (agent_id, memory_key) DO UPDATE
+  SET content = EXCLUDED.content,
+      updated_at = EXCLUDED.updated_at;
+SQL
 }
 
 hb_seed_secret() {
