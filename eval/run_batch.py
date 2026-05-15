@@ -5,6 +5,8 @@ import json
 import logging
 import os
 import re
+import signal
+import subprocess
 import sys
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -134,10 +136,45 @@ def run_single_task(
     return result
 
 
+def _cleanup_hb_containers() -> None:
+    """Force-remove any leftover hb-* containers started by this run.
+
+    Used as a Ctrl-C / SIGTERM safety net so a half-finished batch doesn't
+    leave Postgres+gateway containers running on the host.
+    """
+    try:
+        listing = subprocess.run(
+            ["docker", "ps", "--filter", "name=hb-", "--format", "{{.Names}}"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (FileNotFoundError, subprocess.SubprocessError):
+        return
+    names = [n for n in listing.stdout.split() if n]
+    if not names:
+        return
+    subprocess.run(
+        ["docker", "rm", "-f", *names],
+        capture_output=True, text=True,
+    )
+
+
+def _install_signal_cleanup() -> None:
+    def _handler(signum, _frame):  # noqa: ANN001
+        logger.warning("received signal %s — cleaning up hb-* containers", signum)
+        _cleanup_hb_containers()
+        # Re-raise default disposition so the interpreter exits with the
+        # expected status (KeyboardInterrupt for SIGINT).
+        sys.exit(128 + int(signum))
+
+    signal.signal(signal.SIGINT, _handler)
+    signal.signal(signal.SIGTERM, _handler)
+
+
 def main() -> None:
     args = parse_run_batch_args(
         default_model=DEFAULT_MODEL, default_parallel=DEFAULT_PARALLEL
     )
+    _install_signal_cleanup()
     backend = OpenHermitAgent(openrouter_api_key=OPENROUTER_API_KEY)
     output_root = OUTPUT_DIR
     safe_model = re.sub(r"[^a-zA-Z0-9.\-_]", "_", args.model)
