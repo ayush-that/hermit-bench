@@ -26,9 +26,4 @@ def parse_run_batch_args(default_model: str, default_parallel: int) -> argparse.
         default=default_parallel,
         help="Max concurrent task containers.",
     )
-    p.add_argument(
-        "--thinking",
-        default=None,
-        help="Optional thinking-budget hint passed to the agent runtime.",
-    )
     return p.parse_args()

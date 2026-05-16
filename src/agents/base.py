@@ -19,8 +19,6 @@ class AgentTaskSpec:
     timeout_seconds: int
     output_dir: Path
     model: str
-    thinking: str | None = None
-    models_config: dict[str, Any] | None = None
 
 
 @dataclass
