@@ -58,15 +58,15 @@ Six multimodal "lite/nano/flash" models, 79 tasks each, all routed through OpenR
 
 | Rank | Model | Overall Score | Mean Time | Mean Cost/Task | Total Cost (79 tasks) |
 | ---: | :---- | ------------: | --------: | -------------: | --------------------: |
-| 1 | `google/gemini-3.1-flash-lite` | **38.5%** | 29.2s | $0.0000* | $0.0000* |
+| 1 | `google/gemini-3.1-flash-lite` | **37.3%** | 14.7s | $0.0006 | **$0.049** |
 | 2 | `openai/gpt-5-nano` | 36.8% | 1m 1s | $0.0023 | $0.179 |
 | 3 | `qwen/qwen3.6-flash` | 36.7% | 8.4s | $0.0054 | $0.423 |
 | 4 | `amazon/nova-2-lite-v1` | 33.0% | 1m 1s | $0.0050 | $0.394 |
 | 5 | `google/gemini-2.5-flash-lite` | 32.3% | 15.7s | $0.0014 | $0.108 |
 | 6 | `amazon/nova-lite-v1` | 28.7% | 14.6s | $0.0026 | $0.204 |
 
-> *gemini-3.1-flash-lite returned valid responses on 70/79 tasks but OpenRouter reported $0 cost (free tier / unmetered preview at time of sweep). Real per-call cost is non-zero in production.
-> Tasks where the agent or grader errored count as overall_score=0.0: nova-2-lite-v1 (7), gemini-2.5-flash-lite (9), gpt-5-nano (3), nova-lite-v1 (2).
+> `gemini-3.1-flash-lite` cost is derived from token counts × OpenRouter's listed pricing ($0.25/M input, $1.5/M output) — OpenRouter doesn't return a `cost` field for this model in its chat-completions response, but token counts are present and the math is deterministic.
+> Tasks where the agent or grader errored count as overall_score=0.0: nova-2-lite-v1 (7), gemini-2.5-flash-lite (9), gemini-3.1-flash-lite (3), gpt-5-nano (3), nova-lite-v1 (2).
 
 ![Cost vs quality](docs/reports/cost_vs_quality.png)
 
@@ -76,7 +76,7 @@ Six multimodal "lite/nano/flash" models, 79 tasks each, all routed through OpenR
 
 ![Cost per category](docs/reports/cost_per_category.png)
 
-**Takeaway:** at the cheap-multimodal tier, `gpt-5-nano` and `qwen3.6-flash` are statistically tied on overall quality (~37%), but qwen wraps a full 79-task sweep in 6m 27s vs gpt-5-nano's 29m. For latency-sensitive Amiko paths, qwen3.6-flash is the better cheap-and-fast pick; for pure quality at a low price, gpt-5-nano. All six models struggle on `02_Tool_Composition` (multi-step tool chains) and excel on `03_Access_Control` (one-shot refusal patterns) — the heatmap shows the spread clearly.
+**Takeaway:** at the cheap-multimodal tier, **`google/gemini-3.1-flash-lite` is the Pareto winner** — highest score (37.3%) at the lowest cost ($0.049 for the full 79-task sweep, ~3.7× cheaper than `gpt-5-nano` and ~8.7× cheaper than `qwen3.6-flash`). `gpt-5-nano` and `qwen3.6-flash` are statistically tied at ~37% but cost noticeably more per task. All six models struggle on `02_Tool_Composition` (multi-step tool chains) and excel on `03_Access_Control` (one-shot refusal patterns) — the heatmap shows the spread clearly.
 
 Regenerate everything with `python3 script/report.py` after any new sweep.
 <!-- BENCH:END -->
