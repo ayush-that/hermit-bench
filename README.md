@@ -1,7 +1,7 @@
 <h1 align="center">HermitBench</h1>
 
 <p align="center">
-  <img src="docs/assets/hermitbench-icon.png" alt="HermitBench" width="240">
+  <img src="docs/assets/hermitbench-mark.png" alt="HermitBench" width="240">
 </p>
 
 <p align="center"><em>Cost-vs-performance evaluation for LLMs running inside OpenHermit.</em></p>
