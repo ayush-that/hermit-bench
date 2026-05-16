@@ -23,6 +23,7 @@ Unlike CLI-agent benchmarks that test file-and-shell skills in isolation, Hermit
 | 05 | Memory & Introspection | Long-term memory recall, working memory updates |
 | 06 | Scheduling & Automation | Cron jobs, one-shot schedules, run history |
 | 07 | Amiko Social | Post drafting, comment voice, AI-twin DMs, feed rank, privacy, group dynamics — Opus-judged for quality |
+| 08 | Amiko Pipelines | Personality vibe cards, friend match reports, memory extraction (chat/file), post translation, moderation, twins-take share cards, share copy — Opus-judged for quality |
 
 ## Quick Start
 
@@ -43,8 +44,8 @@ bash script/run.sh --category all --parallel 4 \
   --model anthropic/claude-sonnet-4.6
 ```
 
-> Category 07 requires `OPENROUTER_API_KEY` (for the judge call) and reads
-> `JUDGE_MODEL` from the environment. Each judge call costs roughly $0.01
+> Categories 07 and 08 require `OPENROUTER_API_KEY` (for the judge call) and
+> read `JUDGE_MODEL` from the environment. Each judge call costs roughly $0.01
 > with `anthropic/claude-opus-4.7`; if you want to bench-test on the cheap,
 > set `JUDGE_MODEL=anthropic/claude-haiku-4.7` or similar.
 
