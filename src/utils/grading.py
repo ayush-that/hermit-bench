@@ -48,7 +48,6 @@ def run_grading(
     automated_checks: str,
     output_dir: Path,
     extra_env: str = "",
-    lobster_env: list[str] | None = None,
     transcript_container_path: str = "",
     write_error_score: bool = False,
 ) -> dict:
@@ -145,15 +144,6 @@ def run_grading(
             env_args += ["-e", f"{key}={value}"]
             masked = (value[:4] + "***") if value else "(empty)"
             logger.info("[%s] Injecting grading env: %s=%s", task_id, key, masked)
-
-        for key in (lobster_env or []):
-            value = os.environ.get(key, "")
-            if not value:
-                logger.warning("[%s] Grading lobster env key %s not found, skipping", task_id, key)
-                continue
-            env_args += ["-e", f"{key}={value}"]
-            masked = value[:4] + "***"
-            logger.info("[%s] Injecting grading lobster env: %s=%s", task_id, key, masked)
 
         r = subprocess.run(
             ["docker", "exec", *env_args, task_id, "python3", "/tmp/_grade_runner.py"],
