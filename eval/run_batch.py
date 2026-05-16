@@ -52,14 +52,19 @@ DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "openai/gpt-4o-mini")
 DEFAULT_PARALLEL = int(os.environ.get("DEFAULT_PARALLEL", "2"))
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 
-ALL_CATEGORIES = [
-    "01_CLI_Fluency",
-    "02_Tool_Composition",
-    "03_Access_Control",
-    "04_Channel_Routing",
-    "05_Memory_Introspection",
-    "06_Scheduling_Automation",
-]
+def _discover_categories() -> list[str]:
+    """Return all task category directories under ``TASKS_DIR``.
+
+    A category directory is any direct child of ``tasks/`` whose name starts
+    with two digits and an underscore (e.g. ``07_Amiko_Social``). Dynamic
+    discovery keeps new categories (08, 09, ...) auto-included without a
+    code change.
+    """
+    return sorted(
+        d.name
+        for d in TASKS_DIR.iterdir()
+        if d.is_dir() and re.match(r"^\d{2}_", d.name)
+    )
 
 
 def run_single_task(
@@ -184,7 +189,7 @@ def main() -> None:
         run_single_task(task, args.model, backend, output_root)
         return
 
-    categories = ALL_CATEGORIES if args.category.lower() == "all" else [args.category]
+    categories = _discover_categories() if args.category.lower() == "all" else [args.category]
     all_results: list[dict] = []
 
     for category in categories:
