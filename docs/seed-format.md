@@ -58,10 +58,4 @@ Inside `seed_post.sh`, run `source /usr/local/bin/seed_helpers.sh` to use:
 
 ## Bundled fixtures
 
-Copy lines from these into your task's `Seed SQL` block, or `\\i /tmp_workspace/fixtures/<path>.sql` if you bind-mount them. The base set:
-
-- `fixtures/users/sample_users.sql`
-- `fixtures/memories/sample_memories.sql`
-- `fixtures/policies/default_policy.sql`
-- `fixtures/instructions/{identity,soul,rules}_default.md` — feed into `hb_seed_instruction` from `seed_post.sh`.
 - `fixtures/skills/standup-digest/SKILL.md` — register with `hb_seed_skill main fixtures/skills/standup-digest`.
